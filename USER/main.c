@@ -25,7 +25,7 @@ u8 AbnormalReporting(u8 type,u8 group,u8 number);
 char recvfromPCbuf[USART_REC_LEN];//上位机通信串口接收缓存
 extern BattaryMSG battarymsg;
 #define DEBUG_DATA_UP_LOAD
-//#define BEIDA_CODE_V1
+#define DEBUG_PROTECT_IO  0 //0为取消急停等保护开关，1为打开急停等保护开关
 #define INSPECTIONROBOT_CODE_V2
 //u16 num2timer=0;
 /*****************************************************************************
@@ -49,6 +49,8 @@ int main(void)
 	{   
         canSend(CAN1,&Can_Msg_SYNCMY);		
 	  	delay_ms(10);
+
+//	Set_Speed((float)-10.0,(float)10.0);	//设置左右电机速度
         ModeSelection();
          cnt++;
 
@@ -98,7 +100,7 @@ void SYS_Init(void)
 #endif    
     BSP_GPIO_Init();
 	MYRS485_Init(9600);		//初始化RS485串口2	
-	Adc_Init();
+//	Adc_Init();
     delay_ms(5000);
 	CanopenInit();//CANopen初始化
 
@@ -107,7 +109,7 @@ void SYS_Init(void)
 
     MotorInit();
     PS2_Init(); 
-#ifdef BEIDA_CODE_V1
+#if DEBUG_PROTECT_IO
 	RequestBatteryInformation(&battarymsg);
 	while(PZ_CHECK == 0)
 	{
@@ -337,7 +339,9 @@ void ModeSelection(void)
 {
      static u32 cnt=0;
 	static uint16_t Heartbeat = 0;
-
+	Get_Swerve_Speed_PS2(); //处于手动遥控模式下
+		LED1=!LED1;
+#if 0	  
 	if(AUTOMODE==0) //串口3接收到数据并处在自动模式下
 	{      
         Date_Up_Load(UPLOAD_ENCODER_AND_VELOCITY); //封装编码器&速度数据并上传
@@ -345,14 +349,14 @@ void ModeSelection(void)
         if(cnt%2==0)
         {
             Date_Up_Load(UPLOAD_STATUS_AND_CURRENT); //封装状态字&电流数据并上传
-#ifdef FRE_UPLOAD_DATA 					
+#if FRE_UPLOAD_DATA 					
         /* 计算上传频率 */	
-					timecnt = TIM3->CNT;
-					printf("\r\n[UPLOAD_ENCODER_AND_VELOCITY] cycle: %d ms  fre:%f\r\n",timecnt,1000.0f/timecnt);
-          TIM3->CNT = 0; 
+		timecnt = TIM3->CNT;
+		printf("\r\n[UPLOAD_ENCODER_AND_VELOCITY] cycle: %d ms  fre:%f\r\n",timecnt,1000.0f/timecnt);
+        TIM3->CNT = 0; 
 #endif
             StatusWordAnalysis();
-						LED1=!LED1;
+			LED1=!LED1;
         }
         if(USART_RX_STA>>15)
         {
@@ -361,19 +365,22 @@ void ModeSelection(void)
             USART_RX_STA=0;
 						Heartbeat = 0;
         }
+#if DEBUG_BATTERY
 		if(cnt%225==0)//(100*60*10)) 30000大概上传周期为 400s周期
 		{
 			RequestBatteryInformation(&battarymsg);
 			Date_Up_Load(BATTARY_MONITOR_MSGID_CMD);
-		
 		}
+#endif
+#if DEBUG_INFRARED_DIS
 		if(cnt%30==0)//(100*60*10)) 30 大概上传周期为0.3s 
 		{
 			Get_Distance_Infrared(hw_dis);
 			Date_Up_Load(INFRARED_DISTANCE_CMD);
 		}
-				HeartbeatDetection(&Heartbeat);
-				cnt++;
+#endif
+		HeartbeatDetection(&Heartbeat);
+		cnt++;
 	}
 	else if(AUTOMODE==1)
 	{
@@ -381,7 +388,7 @@ void ModeSelection(void)
 		Get_Swerve_Speed_PS2(); //处于手动遥控模式下
 		LED1=!LED1;
 	}
-	#ifdef BEIDA_CODE_V1
+#if DEBUG_PROTECT_IO
 	while(PZ_CHECK == 0)
 	{
 		MotionHalts();
@@ -396,9 +403,9 @@ void ModeSelection(void)
 	{
 		Set_Alarm(4);
 	}
-	#endif
-		Heartbeat++;
-
+#endif
+	Heartbeat++;
+#endif
 }
 /* delete begin by jishubao, 2018-11-21, Mantis号:2*/
 #if 0 //下位机调试时测试驱动器功能时使用

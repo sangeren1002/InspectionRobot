@@ -2,7 +2,35 @@
 #define __PS2_H
 #include "sys.h"
 
+#define LIU_201903_PS2 1
 
+#if LIU_201903_PS2
+#define PS2_CLK_ENABLE()           	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOA,ENABLE)    //急停按钮时钟使能
+#define PS2_PORTA      				GPIOA                  // 接口PORTD
+#define PS2_PORTC     				GPIOC                  // 接口PORTD
+#define PS2_DI_PIN       			GPIO_Pin_3             // 
+#define PS2_DO_PIN       			GPIO_Pin_9              // 
+#define PS2_CS_PIN       			GPIO_Pin_6              // 
+#define PS2_CLK_PIN       			GPIO_Pin_7              // 
+
+#define DI   PAin(3)           //PB12  输入
+
+#define DO_H PCout(9)=1        //命令位高
+#define DO_L PCout(9)=0        //命令位低
+
+#define CS_H PCout(6)=1       //CS拉高
+#define CS_L PCout(6)=0       //CS拉低
+
+#define CLK_H PCout(7)=1      //时钟拉高
+#define CLK_L PCout(7)=0      //时钟拉低
+
+#else
+#define PS2_CLK_ENABLE()           	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB,ENABLE)    //急停按钮时钟使能
+#define PS2_PORT      				GPIOB                  // 接口PORTD
+#define PS2_DI_PIN       			GPIO_Pin_12             // 
+#define PS2_DO_PIN       			GPIO_Pin_13              // 
+#define PS2_CS_PIN       			GPIO_Pin_14              // 
+#define PS2_CLK_PIN       			GPIO_Pin_15              // 
 
 #define DI   PBin(12)           //PB12  输入
 
@@ -14,7 +42,7 @@
 
 #define CLK_H PBout(15)=1      //时钟拉高
 #define CLK_L PBout(15)=0      //时钟拉低
-
+#endif
 
 //These are our button constants
 #define PSB_SELECT      1

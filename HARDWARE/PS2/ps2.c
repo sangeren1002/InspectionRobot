@@ -1,4 +1,4 @@
-﻿#include "ps2.h" 
+#include "ps2.h" 
 #include "delay.h"
 
 
@@ -42,23 +42,24 @@ void PS2_Init(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
 
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOF时钟
-
-  //
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+//  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOF时钟
+	PS2_CLK_ENABLE();
+  
+  GPIO_InitStructure.GPIO_Pin = PS2_DO_PIN | PS2_CS_PIN | PS2_CLK_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//普通输出模式
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//100MHz
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;//下拉
-  GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
+  GPIO_Init(PS2_PORTC, &GPIO_InitStructure);//初始化
 	
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+	GPIO_InitStructure.GPIO_Pin = PS2_DI_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;//普通输入模式
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//100MHz
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;//下拉
-  GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
+  GPIO_Init(PS2_PORTA, &GPIO_InitStructure);//初始化
 	
-	GPIO_ResetBits(GPIOB,GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15);//初始状态为低电平
+	GPIO_ResetBits(PS2_PORTA,PS2_DI_PIN);
+	GPIO_ResetBits(PS2_PORTC,PS2_DO_PIN | PS2_CS_PIN | PS2_CLK_PIN);//初始状态为低电平
 
 }
 
@@ -76,9 +77,9 @@ void PS2_Cmd(u8 CMD)
 		else DO_L;
 
 		CLK_H;                        //时钟拉高
-		delay_us(50);
+		delay_us(10);
 		CLK_L;
-		delay_us(50);
+		delay_us(10);
 		CLK_H;
 		if(DI)
 			Data[1] = ref|Data[1];
